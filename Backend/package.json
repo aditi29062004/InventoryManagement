@@ -1,0 +1,43 @@
+{
+  "name": "inventory-management-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Inventory Management System",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "db:sync": "NODE_ENV=development node scripts/sync-db.js"
+  },
+  "keywords": [
+    "inventory",
+    "management",
+    "api",
+    "ecommerce"
+  ],
+  "author": "Aditi Sharma",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "compression": "^1.8.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.2.1",
+    "helmet": "^7.1.0",
+    "joi": "^17.11.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^2.0.1",
+    "sequelize": "^6.35.0",
+    "sqlite3": "^5.1.6"
+
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+  "node": ">=18.0.0"
+  },
+  "type": "commonjs"
+}
