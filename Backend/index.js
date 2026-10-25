@@ -349,8 +349,8 @@ async function startServer() {
         
         // Sync database models
         await sequelize.sync({ 
-            force: process.env.DB_FORCE_SYNC === 'true',
-            alter: process.env.NODE_ENV === 'development'
+           force: false,
+           alter: false
         });
         console.log('✅ Database models synchronized');
         
