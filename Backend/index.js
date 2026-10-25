@@ -54,7 +54,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files from the root directory (for frontend)
-app.use(express.static(path.join(__dirname, '..')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -283,7 +283,7 @@ app.post('/api/bulk-operations', async (req, res) => {
 
 // Serve the main frontend file
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Handle 404 for API routes
@@ -297,7 +297,7 @@ app.use('/api/*', (req, res) => {
 
 // Handle all other routes by serving the frontend
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Global error handling middleware

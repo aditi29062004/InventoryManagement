@@ -9,7 +9,9 @@ const sequelize = new Sequelize({
   define: {
     timestamps: true,
     underscored: true,
-    freezeTableName: true
+    freezeTableName: true,
+     createdAt: 'created_at',
+    updatedAt: 'updated_at'
   },
   pool: {
     max: 5,

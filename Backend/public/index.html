@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management System</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- CSP-friendly meta tag example -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';">
+</head>
+<body>
+    <header class="header">
+        <h1>📦 Inventory Management System</h1>
+    </header>
+
+    <div class="container">
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+            <button class="nav-tab" data-tab="products">Products</button>
+            <button class="nav-tab" data-tab="suppliers">Suppliers</button>
+            <button class="nav-tab" data-tab="orders">Orders</button>
+            <button class="nav-tab" data-tab="purchase-orders">Purchase Orders</button>
+            <button class="nav-tab" data-tab="analytics">Analytics</button>
+        </nav>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-products">0</div>
+                    <div class="stat-label">Total Products</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="low-stock-count">0</div>
+                    <div class="stat-label">Low Stock Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pending-orders">0</div>
+                    <div class="stat-label">Pending Orders</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-suppliers">0</div>
+                    <div class="stat-label">Active Suppliers</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🚨 Low Stock Alerts</h3>
+                <div id="low-stock-alerts"></div>
+            </div>
+
+            <div class="card">
+                <h3>📋 Recent Orders</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-orders"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Tab -->
+        <div id="products" class="tab-content">
+            <div class="card">
+                <h3>Add New Product</h3>
+                <form id="product-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="product-name">Product Name *</label>
+                            <input type="text" id="product-name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-sku">SKU *</label>
+                            <input type="text" id="product-sku" name="sku" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-barcode">Barcode</label>
+                            <input type="text" id="product-barcode" name="barcode">
+                        </div>
+                        <div class="form-group">
+                            <label for="product-category">Category</label>
+                            <select id="product-category" name="category">
+                                <option value="">Select Category</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Books">Books</option>
+                                <option value="Home & Garden">Home & Garden</option>
+                                <option value="Sports">Sports</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-price">Price *</label>
+                            <input type="number" id="product-price" name="price" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-cost">Cost *</label>
+                            <input type="number" id="product-cost" name="cost" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-stock">Current Stock *</label>
+                            <input type="number" id="product-stock" name="stock" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-min-stock">Min Stock Level *</label>
+                            <input type="number" id="product-min-stock" name="min_stock" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-supplier-select">Supplier</label>
+                            <select name="supplier_id" id="product-supplier-select">
+                                <option value="">Select Supplier</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="product-description">Description</label>
+                        <textarea id="product-description" name="description" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Product</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Product List</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>SKU</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Suppliers Tab -->
+        <div id="suppliers" class="tab-content">
+            <div class="card">
+                <h3>Add New Supplier</h3>
+                <form id="supplier-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="supplier-name">Company Name *</label>
+                            <input type="text" id="supplier-name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplier-contact">Contact Person</label>
+                            <input type="text" id="supplier-contact" name="contact_person">
+                        </div>
+                        <div class="form-group">
+                            <label for="supplier-email">Email *</label>
+                            <input type="email" id="supplier-email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplier-phone">Phone</label>
+                            <input type="tel" id="supplier-phone" name="phone">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="supplier-address">Address</label>
+                        <textarea id="supplier-address" name="address" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Supplier</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Supplier List</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Contact Person</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Products</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suppliers-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Tab -->
+        <div id="orders" class="tab-content">
+            <div class="card">
+                <h3>Create New Order</h3>
+                <form id="order-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="order-customer-name">Customer Name *</label>
+                            <input type="text" id="order-customer-name" name="customer_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="order-customer-email">Customer Email</label>
+                            <input type="email" id="order-customer-email" name="customer_email">
+                        </div>
+                    </div>
+                    
+                    <h4>Order Items</h4>
+                    <div id="order-items">
+                        <div class="order-item form-grid">
+                            <div class="form-group">
+                                <label for="order-product-1">Product</label>
+                                <select name="product_id" id="order-product-1" class="product-select" required>
+                                    <option value="">Select Product</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="order-quantity-1">Quantity</label>
+                                <input type="number" id="order-quantity-1" name="quantity" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="order-price-1">Price</label>
+                                <input type="number" id="order-price-1" name="price" step="0.01" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-secondary btn-sm" id="add-order-item-btn">Add Item</button>
+                    <button type="submit" class="btn btn-primary">Create Order</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Order List</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Purchase Orders Tab -->
+        <div id="purchase-orders" class="tab-content">
+            <div class="card">
+                <h3>Create Purchase Order</h3>
+                <form id="purchase-order-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="po-supplier-select">Supplier *</label>
+                            <select name="supplier_id" id="po-supplier-select" required>
+                                <option value="">Select Supplier</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="po-expected-date">Expected Date</label>
+                            <input type="date" id="po-expected-date" name="expected_date">
+                        </div>
+                    </div>
+                    
+                    <h4>Items to Order</h4>
+                    <div id="po-items">
+                        <div class="po-item form-grid">
+                            <div class="form-group">
+                                <label for="po-product-1">Product</label>
+                                <select name="product_id" id="po-product-1" class="po-product-select" required>
+                                    <option value="">Select Product</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="po-quantity-1">Quantity</label>
+                                <input type="number" id="po-quantity-1" name="quantity" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="po-unit-cost-1">Unit Cost</label>
+                                <input type="number" id="po-unit-cost-1" name="unit_cost" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                                                                           
+                    <button type="button" class="btn btn-secondary btn-sm" id="add-po-item-btn">Add Item</button>
+                    <button type="submit" class="btn btn-primary">Create Purchase Order</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Purchase Orders</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>PO #</th>
+                                <th>Supplier</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchase-orders-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-revenue">$0</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-orders-count">0</div>
+                    <div class="stat-label">Total Orders</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avg-order-value">$0</div>
+                    <div class="stat-label">Avg Order Value</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="inventory-value">$0</div>
+                    <div class="stat-label">Inventory Value</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📊 Sales Analytics</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Units Sold</th>
+                                <th>Revenue</th>
+                                <th>Profit</th>
+                                <th>Margin</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analytics-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📈 Top Performing Products</h3>
+                <div id="top-products"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
