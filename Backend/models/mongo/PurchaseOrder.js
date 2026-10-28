@@ -1,5 +1,4 @@
-
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
 const purchaseOrderItemSchema = new mongoose.Schema(
     {
@@ -96,11 +95,45 @@ const purchaseOrderSchema = new mongoose.Schema(
             ],
             default: 'pending',
             required: true
+        },
+
+        receipts: {
+            type: [{
+                idempotencyKey: {
+                    type: String,
+                    required: true,
+                    trim: true,
+                    minlength: 1,
+                    maxlength: 128
+                },
+                items: {
+                    type: [{
+                        productId: {
+                            type: mongoose.Schema.Types.ObjectId,
+                            ref: 'Product',
+                            required: true
+                        },
+                        quantity: {
+                            type: Number,
+                            required: true,
+                            min: 1,
+                            validate: Number.isInteger
+                        }
+                    }],
+                    required: true
+                },
+                receivedAt: {
+                    type: Date,
+                    required: true
+                }
+            }],
+            default: []
         }
     },
     {
         timestamps: true,
-        versionKey: false
+        versionKey: '__v',
+        optimisticConcurrency: true
     }
 );
 

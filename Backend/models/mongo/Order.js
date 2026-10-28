@@ -60,6 +60,13 @@ const orderSchema = new mongoose.Schema(
             trim: true
         },
 
+        idempotencyKey: {
+            type: String,
+            trim: true,
+            maxlength: [128, 'Idempotency key cannot exceed 128 characters'],
+            default: undefined
+        },
+
         customerName: {
             type: String,
             trim: true,
@@ -122,5 +129,14 @@ orderSchema.index(
 
 orderSchema.index({ ownerId: 1, createdAt: -1 });
 orderSchema.index({ ownerId: 1, status: 1 });
+orderSchema.index(
+    { ownerId: 1, idempotencyKey: 1 },
+    {
+        unique: true,
+        partialFilterExpression: {
+            idempotencyKey: { $type: 'string' }
+        }
+    }
+);
 
 module.exports = mongoose.model('Order', orderSchema);

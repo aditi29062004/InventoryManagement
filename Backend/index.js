@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const helmet = require('helmet');
@@ -12,8 +12,15 @@ const { sequelize } = require('./config/database');
 // Import routes
 const productRoutes = require('./routes/productRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
+const mongoSupplierRoutes = require('./routes/mongoSupplierRoutes');
+const mongoProductRoutes = require('./routes/mongoProductRoutes');
+const mongoOrderRoutes = require('./routes/mongoOrderRoutes');
+const mongoPurchaseOrderRoutes = require('./routes/mongoPurchaseOrderRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
+
+const authRoutes = require('./routes/authRoutes');
+const { connectMongoDB } = require('./config/mongodb');
 
 // Import models to initialize associations
 require('./models');
@@ -43,10 +50,16 @@ app.use(morgan('combined'));
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' ? 
         ['https://your-domain.com'] : 
-        ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500'],
+        [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5500',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173'
+],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Idempotency-Key']
 }));
 
 // Body parsing middleware
@@ -67,8 +80,13 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
-app.use('/api/products', productRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/suppliers', mongoSupplierRoutes);
+app.use('/api/v1/products', mongoProductRoutes);
+app.use('/api/v1/orders', mongoOrderRoutes);
+app.use('/api/v1/purchase-orders', mongoPurchaseOrderRoutes);
 app.use('/api/suppliers', supplierRoutes);
+app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/purchase-orders', purchaseRoutes);
 
@@ -343,66 +361,71 @@ app.use((error, req, res, next) => {
 // Database connection and server startup
 async function startServer() {
     try {
-        // Test database connection
+        // Test existing SQLite database connection
         await sequelize.authenticate();
-        console.log('✅ Database connection established successfully');
-        
+        console.log('SQLite database connection established successfully');
+
+        // Connect MongoDB for authentication and new application data
+        await connectMongoDB();
+        console.log('MongoDB connection established successfully');
+
+        // Sync existing SQLite models without destructive changes
         // Sync database models
         await sequelize.sync({ 
            force: false,
            alter: false
         });
-        console.log('✅ Database models synchronized');
+        console.log('Database models synchronized');
         
         // Start the server
-        const server = app.listen(PORT, () => {
-            console.log(`🚀 Server running on port ${PORT}`);
-            console.log(`📊 Dashboard: http://localhost:${PORT}`);
-            console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
-            console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
-            console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+       const server = app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+            console.log(`Dashboard: http://localhost:${PORT}`);
+            console.log(`API Base URL: http://localhost:${PORT}/api`);
+            console.log(`Health Check: http://localhost:${PORT}/health`);
+            console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
         });
         
-        // Graceful shutdown
+       // Graceful shutdown
         process.on('SIGTERM', () => {
-            console.log('🛑 SIGTERM received, shutting down gracefully');
+            console.log('SIGTERM received, shutting down gracefully');
             server.close(() => {
-                console.log('✅ HTTP server closed');
+                console.log('HTTP server closed');
                 sequelize.close().then(() => {
-                    console.log('✅ Database connection closed');
+                    console.log('Database connection closed');
                     process.exit(0);
                 });
             });
         });
-        
+
         process.on('SIGINT', () => {
-            console.log('🛑 SIGINT received, shutting down gracefully');
+            console.log('SIGINT received, shutting down gracefully');
             server.close(() => {
-                console.log('✅ HTTP server closed');
+                console.log('HTTP server closed');
                 sequelize.close().then(() => {
-                    console.log('✅ Database connection closed');
+                    console.log('Database connection closed');
                     process.exit(0);
                 });
             });
         });
-        
-    } catch (error) {
-        console.error('❌ Unable to start server:', error);
-        process.exit(1);
-    }
+
+        } catch (error) {
+            console.error('Unable to start server:', error);
+            process.exit(1);
+        }
 }
 
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-    console.error('❌ Uncaught Exception:', error);
-    process.exit(1);
-});
+    /// Handle uncaught exceptions
+    process.on('uncaughtException', (error) => {
+        console.error('Uncaught Exception:', error);
+        process.exit(1);
+    });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-    process.exit(1);
-});
+    // Handle unhandled promise rejections
+    process.on('unhandledRejection', (reason, promise) => {
+        console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+        process.exit(1);
+    });
 
 app.get('/health', async (req, res) => {
   try {
@@ -424,7 +447,9 @@ app.get('/health', async (req, res) => {
 });
 
 
-// Start the server
-startServer();
+// Start the server only when this file is run directly.
+if (require.main === module) {
+    startServer();
+}
 
 module.exports = app;

@@ -24,7 +24,18 @@ const productSchema = new mongoose.Schema(
             uppercase: true,
             maxlength: [64, 'SKU cannot exceed 64 characters']
         },
-
+        barcode: {
+            type: String,
+            trim: true,
+            default: null,
+            maxlength: [64, 'Barcode cannot exceed 64 characters'],
+            set: value => {
+                if (typeof value === 'string' && value.trim() === '') {
+                    return null;
+                }
+                return value;
+            }
+        },
         description: {
             type: String,
             trim: true,
@@ -84,9 +95,19 @@ const productSchema = new mongoose.Schema(
             default: ''
         },
 
+        status: {
+           type: String,
+           enum: {
+                values: ['active', 'inactive', 'discontinued'],
+                message: 'Invalid product status'
+            },
+            default: 'active',
+            required: true
+        },
+
         isActive: {
-            type: Boolean,
-            default: true
+           type: Boolean,
+           default: true
         }
     },
     {
@@ -99,6 +120,17 @@ const productSchema = new mongoose.Schema(
 productSchema.index(
     { ownerId: 1, sku: 1 },
     { unique: true }
+);
+
+// Each user can have a given barcode only once.
+productSchema.index(
+    { ownerId: 1, barcode: 1 },
+    {
+        unique: true,
+        partialFilterExpression: {
+            barcode: { $type: 'string' }
+        }
+    }
 );
 
 // Useful for inventory and low-stock queries.
