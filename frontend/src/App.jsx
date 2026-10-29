@@ -8,6 +8,8 @@ import ProductsPage from './features/products/ProductsPage'
 import SupplierPage from './features/suppliers/SupplierPage'
 import SalesOrdersPage from './features/orders/SalesOrdersPage'
 import PurchaseOrdersPage from './features/purchaseOrders/PurchaseOrdersPage'
+import DashboardPage from './features/dashboard/DashboardPage'
+import AnalyticsPage from './features/dashboard/AnalyticsPage'
 import './App.css'
 
 const navigation = [
@@ -81,98 +83,16 @@ function Topbar() {
         </label>
         <button className="icon-button" type="button" aria-label="Notifications">♧</button>
         <button
-  className="top-avatar"
-  type="button"
-  aria-label="Sign out"
-  title={`Sign out ${user?.name || ''}`}
-  onClick={logout}
->
-  {user?.name?.charAt(0)?.toUpperCase() || 'A'}
-</button>
-      </div>
-    </header>
-  )
-}
-
-function Dashboard() {
-  return (
-    <>
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">OVERVIEW</p>
-          <h1>Inventory Dashboard</h1>
-          <p className="page-description">
-            Here's what's happening with your inventory today.
-          </p>
-        </div>
-        <button className="primary-button" type="button" disabled title="Available after API integration">
-          + Add Product
+          className="top-avatar"
+          type="button"
+          aria-label="Sign out"
+          title={`Sign out ${user?.name || ''}`}
+          onClick={logout}
+        >
+          {user?.name?.charAt(0)?.toUpperCase() || 'A'}
         </button>
       </div>
-
-      <section className="metrics-grid" aria-label="Inventory summary">
-        {metrics.map((metric) => (
-          <article className="metric-card" key={metric.label}>
-            <div className="metric-top">
-              <span>{metric.label}</span>
-              <span className={`metric-icon ${metric.tone}`} aria-hidden="true">{metric.icon}</span>
-            </div>
-            <div className="metric-value">{metric.value}</div>
-            <p className="metric-note">{metric.note}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="dashboard-grid">
-        <article className="panel orders-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Recent Orders</h2>
-              <p>Your latest sales activity</p>
-            </div>
-            <NavLink to="/orders" className="text-link">View all →</NavLink>
-          </div>
-
-          <div className="empty-state">
-            <div className="empty-icon">▤</div>
-            <strong>No order data connected yet</strong>
-            <p>Orders will appear here once we connect the backend API.</p>
-          </div>
-        </article>
-
-        <article className="panel stock-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Low Stock Alerts</h2>
-              <p>Products needing attention</p>
-            </div>
-            <span className="status-pill">Live data pending</span>
-          </div>
-
-          <div className="empty-state">
-            <div className="empty-icon warning-icon">!</div>
-            <strong>No stock data connected yet</strong>
-            <p>We'll display low-stock products from your inventory.</p>
-          </div>
-        </article>
-      </section>
-
-      <footer className="dashboard-footer">
-        <span>Inventra Inventory Management</span>
-        <span>Dashboard UI preview · API not connected</span>
-      </footer>
-    </>
-  )
-}
-
-function PlaceholderPage({ title }) {
-  return (
-    <section className="panel placeholder-page">
-      <p className="eyebrow">WORKSPACE</p>
-      <h1>{title}</h1>
-      <p>This page will be implemented and connected to the backend in a later step.</p>
-      <NavLink to="/dashboard" className="text-link">← Back to Dashboard</NavLink>
-    </section>
+    </header>
   )
 }
 
@@ -199,12 +119,12 @@ function AuthenticatedApp() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/suppliers" element={<SupplierPage />} />
           <Route path="/orders" element={<SalesOrdersPage />} />
           <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
-          <Route path="/analytics" element={<PlaceholderPage title="Analytics" />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
         </Route>
       </Route>
 

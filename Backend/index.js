@@ -18,6 +18,8 @@ const mongoOrderRoutes = require('./routes/mongoOrderRoutes');
 const mongoPurchaseOrderRoutes = require('./routes/mongoPurchaseOrderRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
+const mongoDashboardRoutes = require('./routes/mongoDashboardRoutes');
+const mongoAnalyticsRoutes = require('./routes/mongoAnalyticsRoutes');
 
 const authRoutes = require('./routes/authRoutes');
 const { connectMongoDB } = require('./config/mongodb');
@@ -89,7 +91,8 @@ app.use('/api/suppliers', supplierRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/purchase-orders', purchaseRoutes);
-
+app.use('/api/v1/dashboard', mongoDashboardRoutes);
+app.use('/api/v1/analytics', mongoAnalyticsRoutes);
 // Analytics endpoint
 app.get('/api/analytics', async (req, res) => {
     try {
