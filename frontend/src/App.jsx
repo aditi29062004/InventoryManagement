@@ -6,6 +6,7 @@ import RegisterPage from './features/auth/RegisterPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 import ProductsPage from './features/products/ProductsPage'
 import SupplierPage from './features/suppliers/SupplierPage'
+import SalesOrdersPage from './features/orders/SalesOrdersPage'
 import './App.css'
 
 const navigation = [
@@ -200,7 +201,7 @@ function AuthenticatedApp() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/suppliers" element={<SupplierPage />} />
-          <Route path="/orders" element={<PlaceholderPage title="Sales Orders" />} />
+          <Route path="/orders" element={<SalesOrdersPage />} />
           <Route path="/purchase-orders" element={<PlaceholderPage title="Purchase Orders" />} />
           <Route path="/analytics" element={<PlaceholderPage title="Analytics" />} />
         </Route>

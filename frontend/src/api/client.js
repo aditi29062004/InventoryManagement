@@ -11,16 +11,29 @@ export async function apiRequest(path, options = {}) {
     ...options.headers,
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const requestOptions = {
     ...options,
     headers,
-  })
+  }
+
+  if (
+    options.body !== undefined &&
+    options.body !== null &&
+    typeof options.body !== 'string'
+  ) {
+    requestOptions.body = JSON.stringify(options.body)
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, requestOptions)
 
   const data = await response.json().catch(() => null)
 
   if (!response.ok) {
     const error = new Error(
-      data?.error?.message || `Request failed with status ${response.status}`,
+      data?.error?.message ||
+        data?.message ||
+        data?.error ||
+        `Request failed with status ${response.status}`,
     )
 
     error.status = response.status
