@@ -1835,3 +1835,128 @@
     flex-direction: column;
   }
 }
+
+/* Purchase Orders page refinements */
+.purchase-orders-page .sales-orders-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 0 0 20px;
+}
+
+.purchase-orders-page .sales-orders-toolbar h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.35;
+  color: #172554;
+}
+
+.purchase-orders-page .sales-orders-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.purchase-orders-page .sales-orders-toolbar select {
+  min-width: 165px;
+  min-height: 42px;
+}
+
+.purchase-orders-page .sales-orders-table-wrapper {
+  margin-top: 12px;
+  border-color: #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.purchase-orders-page .sales-orders-table {
+  min-width: 850px;
+}
+
+.purchase-orders-page .sales-orders-table th {
+  padding: 15px 16px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+}
+
+.purchase-orders-page .sales-orders-table td {
+  padding: 16px;
+  color: #334155;
+  font-size: 13px;
+}
+
+.purchase-orders-page .sales-orders-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.purchase-orders-page .sales-orders-table td:first-child {
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.purchase-orders-page .status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.purchase-orders-page .sales-orders-table td button {
+  min-height: 34px;
+  padding: 8px 12px;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.purchase-orders-page .sales-orders-table td button:hover:not(:disabled) {
+  background: #e0e7ff;
+}
+
+.purchase-orders-page .sales-orders-table td button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.purchase-orders-page .sales-orders-pagination {
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+@media (max-width: 640px) {
+  .purchase-orders-page .sales-orders-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .purchase-orders-page .sales-orders-toolbar label {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .purchase-orders-page .sales-orders-toolbar select {
+    width: 100%;
+  }
+
+  .purchase-orders-page .sales-orders-table-wrapper {
+    overflow-x: auto;
+  }
+}

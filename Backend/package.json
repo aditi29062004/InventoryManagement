@@ -7,7 +7,7 @@
         "start": "node index.js",
         "dev": "nodemon index.js",
         "db:sync": "NODE_ENV=development node scripts/sync-db.js",
-        "test": "node --test tests/auth.test.js tests/mongo-models.test.js tests/mongo-supplier-controller.test.js tests/mongo-product-controller.test.js tests/mongo-order-service.test.js tests/mongo-order-controller.test.js tests/mongo-purchase-order-service.test.js tests/mongo-order-api.integration.test.js tests/mongo-order-service.integration.test.js tests/mongo-purchase-order-api.integration.test.js",
+        "test": "node --test tests/auth.test.js tests/mongo-models.test.js tests/mongo-supplier-controller.test.js tests/mongo-product-controller.test.js tests/mongo-order-service.test.js tests/mongo-order-controller.test.js tests/mongo-purchase-order-service.test.js tests/mongo-order-api.integration.test.js tests/mongo-order-service.integration.test.js tests/mongo-purchase-order-api.integration.test.js tests/mongo-purchase-order-controller.test.js",
         "test:integration": "node --test tests/auth.integration.test.js"
     },
     "keywords": [

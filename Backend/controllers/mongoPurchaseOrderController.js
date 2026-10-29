@@ -1,5 +1,12 @@
 ﻿const mongoose = require('mongoose');
 const { PurchaseOrder } = require('../models/mongo');
+const ALLOWED_STATUSES = [
+    'pending',
+    'ordered',
+    'partially_received',
+    'received',
+    'cancelled'
+];
 
 const {
     createMongoPurchaseOrder,
@@ -53,6 +60,86 @@ function handleError(res, error, operation) {
         'INTERNAL_ERROR',
         `Failed to ${operation} purchase order`
     );
+}
+
+
+async function listPurchaseOrders(req, res) {
+    try {
+        const rawPage = req.query.page ?? '1';
+        const rawLimit = req.query.limit ?? '20';
+
+        const isPositiveInteger = value =>
+            typeof value === 'string' && /^[1-9]\d*$/.test(value);
+
+        if (
+            !isPositiveInteger(rawPage) ||
+            !isPositiveInteger(rawLimit)
+        ) {
+            return sendError(
+                res,
+                400,
+                'INVALID_PAGINATION',
+                'Page must be positive and limit must be between 1 and 100'
+            );
+        }
+
+        const page = Number(rawPage);
+        const limit = Number(rawLimit);
+
+        if (
+            !Number.isSafeInteger(page) ||
+            !Number.isSafeInteger(limit) ||
+            limit > 100 ||
+            !Number.isSafeInteger((page - 1) * limit)
+        ) {
+            return sendError(
+                res,
+                400,
+                'INVALID_PAGINATION',
+                'Page must be positive and limit must be between 1 and 100'
+            );
+        }
+
+        const filter = { ownerId: req.user._id };
+
+        if (req.query.status !== undefined) {
+            if (
+                typeof req.query.status !== 'string' ||
+                !ALLOWED_STATUSES.includes(req.query.status)
+            ) {
+                return sendError(
+                    res,
+                    400,
+                    'INVALID_STATUS',
+                    'Status must be pending, ordered, partially_received, received, or cancelled'
+                );
+            }
+
+            filter.status = req.query.status;
+        }
+
+        const [purchaseOrders, total] = await Promise.all([
+            PurchaseOrder.find(filter)
+                .sort({ createdAt: -1, _id: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .lean(),
+            PurchaseOrder.countDocuments(filter)
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            data: purchaseOrders,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
+    } catch (error) {
+        return handleError(res, error, 'list');
+    }
 }
 
 async function createPurchaseOrder(req, res) {
@@ -137,6 +224,7 @@ async function receivePurchaseOrder(req, res) {
 }
 
 module.exports = {
+    listPurchaseOrders,
     createPurchaseOrder,
     receivePurchaseOrder
 };
