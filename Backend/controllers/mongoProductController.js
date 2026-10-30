@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 const {
@@ -8,6 +7,11 @@ const {
     PurchaseOrder,
     StockMovement
 } = require('../models/mongo');
+
+const {
+    adjustMongoStock,
+    StockAdjustmentServiceError
+} = require('../services/mongoStockAdjustmentService');
 
 const ALLOWED_STATUSES = [
     'active',
@@ -870,6 +874,57 @@ async function createProduct(req, res) {
     }
 }
 
+async function adjustProductStock(req, res) {
+    try {
+        const { id } = req.params;
+        const { stockQuantity, reason } = req.body ?? {};
+
+        if (!isValidObjectId(id)) {
+            return sendError(
+                res, 400, 'INVALID_PRODUCT_ID',
+                'Product ID is invalid'
+            );
+        }
+
+        const result = await adjustMongoStock({
+            ownerId: req.user._id,
+            productId: id,
+            stockQuantity,
+            reason,
+            idempotencyKey: req.get('Idempotency-Key')
+        });
+
+        return res.status(200).json({
+            success: true,
+            replayed: result.replayed,
+            data: result.movement
+        });
+    } catch (error) {
+        if (error instanceof StockAdjustmentServiceError) {
+            return sendError(
+                res,
+                error.statusCode,
+                error.code,
+                error.message
+            );
+        }
+
+        if (error.code === 11000) {
+            return sendError(
+                res, 409, 'IDEMPOTENCY_CONFLICT',
+                'This stock adjustment conflicts with an existing operation'
+            );
+        }
+
+        console.error('MongoDB stock adjustment error:', error.message);
+
+        return sendError(
+            res, 500, 'INTERNAL_ERROR',
+            'Failed to adjust product stock'
+        );
+    }
+}
+
 module.exports = {
     sendError,
     isValidObjectId,
@@ -884,5 +939,6 @@ module.exports = {
     getProductById,
     updateProduct,
     deleteProduct,
-    createProduct
+    createProduct,
+    adjustProductStock
 };

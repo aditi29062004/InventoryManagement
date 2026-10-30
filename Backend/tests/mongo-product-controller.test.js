@@ -1,4 +1,3 @@
-
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const express = require('express');
@@ -343,22 +342,67 @@ async findOneAndUpdate(filter, update, options) {
     const Order = {};
     const PurchaseOrder = {};
 
-    const controller = proxyquire(
-        '../controllers/mongoProductController',
-        {
-            '../models/mongo': {
-                Product,
-                Supplier,
-                Order,
-                PurchaseOrder,
-                StockMovement
-            }
+ const MockStockAdjustmentServiceError =
+    class StockAdjustmentServiceError extends Error {
+        constructor(statusCode, code, message) {
+            super(message);
+            this.statusCode = statusCode;
+            this.code = code;
         }
-    );
+    };
+
+const stockAdjustmentCalls = {
+    input: null,
+    result: {
+        replayed: false,
+        movement: {
+            _id: 'movement-123',
+            type: 'adjustment',
+            quantityBefore: 5,
+            quantityChange: 5,
+            quantityAfter: 10,
+            reason: 'Physical stock count'
+        }
+    },
+    error: null,
+    ServiceError: MockStockAdjustmentServiceError
+};
+
+const stockAdjustmentService = {
+    async adjustMongoStock(input) {
+        stockAdjustmentCalls.input = input;
+
+        if (stockAdjustmentCalls.error) {
+            throw stockAdjustmentCalls.error;
+        }
+
+        return stockAdjustmentCalls.result;
+    },
+    StockAdjustmentServiceError: MockStockAdjustmentServiceError
+};
+
+    const controller = proxyquire(
+    '../controllers/mongoProductController',
+    {
+        '../models/mongo': {
+            Product,
+            Supplier,
+            Order,
+            PurchaseOrder,
+            StockMovement
+        },
+        '../services/mongoStockAdjustmentService': stockAdjustmentService
+    }
+);
 
     const app = express();
     app.use(express.json());
-
+    // Simulate an authenticated user.
+    app.use((req, res, next) => {
+        req.user = { _id: 'user-123' };
+        next();
+    });
+    app.use(express.json());
     // Simulate an authenticated user.
     app.use((req, res, next) => {
         req.user = { _id: 'user-123' };
@@ -371,6 +415,9 @@ async findOneAndUpdate(filter, update, options) {
     }
     if (controller.updateProduct) {
         app.patch('/products/:id', controller.updateProduct);
+    }
+    if (controller.adjustProductStock) {
+        app.patch('/products/:id/stock', controller.adjustProductStock);
     }
     if (controller.deleteProduct) {
         app.delete('/products/:id', controller.deleteProduct);
@@ -386,7 +433,8 @@ async findOneAndUpdate(filter, update, options) {
         server,
         calls,
         expectedProducts,
-        createdProduct
+        createdProduct,
+        stockAdjustmentCalls
     };
 }
 
@@ -714,5 +762,114 @@ test('returns 404 when soft-deleting a product outside the owner scope', async t
             String(harness.calls.findOneAndUpdateFilter.ownerId),
             'user-123'
         );
+    });
+});
+
+
+test('adjusts product stock using the authenticated owner and idempotency key', async t => {
+    const harness = createHarness();
+
+    await withServer(t, harness, async baseUrl => {
+        const response = await fetch(
+            `${baseUrl}/products/507f1f77bcf86cd799439011/stock`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Idempotency-Key': 'adjust-stock-001'
+                },
+                body: JSON.stringify({
+                    stockQuantity: 10,
+                    reason: 'Physical stock count'
+                })
+            }
+        );
+
+        const body = await response.json();
+
+        assert.equal(response.status, 200);
+        assert.equal(body.success, true);
+        assert.equal(body.replayed, false);
+        assert.equal(body.data.type, 'adjustment');
+        assert.equal(
+            harness.stockAdjustmentCalls.input.ownerId,
+            'user-123'
+        );
+        assert.equal(
+            harness.stockAdjustmentCalls.input.productId,
+            '507f1f77bcf86cd799439011'
+        );
+        assert.equal(
+            harness.stockAdjustmentCalls.input.idempotencyKey,
+            'adjust-stock-001'
+        );
+        assert.equal(
+            harness.stockAdjustmentCalls.input.stockQuantity,
+            10
+        );
+        assert.equal(
+            harness.stockAdjustmentCalls.input.reason,
+            'Physical stock count'
+        );
+    });
+});
+
+test('returns 400 for an invalid product ID during stock adjustment', async t => {
+    const harness = createHarness();
+
+    await withServer(t, harness, async baseUrl => {
+        const response = await fetch(
+            `${baseUrl}/products/not-a-valid-id/stock`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Idempotency-Key': 'adjust-stock-002'
+                },
+                body: JSON.stringify({
+                    stockQuantity: 10,
+                    reason: 'Physical stock count'
+                })
+            }
+        );
+
+        const body = await response.json();
+
+        assert.equal(response.status, 400);
+        assert.equal(body.error.code, 'INVALID_PRODUCT_ID');
+        assert.equal(harness.stockAdjustmentCalls.input, null);
+    });
+});
+
+test('maps stock adjustment service errors to HTTP responses', async t => {
+    const harness = createHarness();
+
+    harness.stockAdjustmentCalls.error =
+    new harness.stockAdjustmentCalls.ServiceError(
+        409,
+        'NO_STOCK_CHANGE',
+        'The requested stock quantity is already set'
+    );
+
+    await withServer(t, harness, async baseUrl => {
+        const response = await fetch(
+            `${baseUrl}/products/507f1f77bcf86cd799439011/stock`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Idempotency-Key': 'adjust-stock-003'
+                },
+                body: JSON.stringify({
+                    stockQuantity: 10,
+                    reason: 'Physical stock count'
+                })
+            }
+        );
+
+        const body = await response.json();
+
+        assert.equal(response.status, 409);
+        assert.equal(body.error.code, 'NO_STOCK_CHANGE');
     });
 });

@@ -29,6 +29,12 @@ const stockMovementSchema = new mongoose.Schema(
             required: true
         },
 
+        reason: {
+            type: String,
+            trim: true,
+            maxlength: 250
+        },
+
         quantityChange: {
             type: Number,
             required: true,

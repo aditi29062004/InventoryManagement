@@ -1,30 +1,51 @@
+require('dotenv').config();
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('node:path');
+const User = require('../models/mongo/User');
 
 require('dotenv').config({
     path: path.join(__dirname, '..', '.env')
 });
 
-const { connectMongoDB } = require('../config/mongodb');
 const authRoutes = require('../routes/authRoutes');
+
+function getTestMongoUri() {
+    const configuredUri = process.env.MONGODB_URI;
+
+    if (!configuredUri) {
+        throw new Error('MONGODB_URI must be configured');
+    }
+
+    const uri = new URL(configuredUri);
+
+    // Always direct this integration test to the dedicated test database.
+    uri.pathname = '/inventory_management_phase23_test';
+
+    return uri.toString();
+}
 
 test('authentication integration flow', async () => {
     assert.ok(process.env.MONGODB_URI, 'MONGODB_URI must be configured');
     assert.ok(process.env.JWT_SECRET, 'JWT_SECRET must be configured');
 
-    await connectMongoDB();
+    await mongoose.connect(getTestMongoUri(), {
+        serverSelectionTimeoutMS: 10000
+    });
+
+    let server;
+    let testUserId;
 
     const app = express();
     app.use(express.json());
     app.use('/api/v1/auth', authRoutes);
 
-    const server = app.listen(0, '127.0.0.1');
-
     try {
+        server = app.listen(0, '127.0.0.1');
+
         await new Promise((resolve, reject) => {
             server.once('listening', resolve);
             server.once('error', reject);
@@ -49,6 +70,11 @@ test('authentication integration flow', async () => {
         });
 
         const registerBody = await registerResponse.json();
+
+        // Capture the ID before assertions so cleanup can run after failures.
+        if (registerBody?.data?.user?._id) {
+            testUserId = registerBody.data.user._id;
+        }
 
         assert.equal(registerResponse.status, 201);
         assert.equal(registerBody.success, true);
@@ -96,13 +122,17 @@ test('authentication integration flow', async () => {
         });
 
         assert.equal(invalidLoginResponse.status, 401);
-    } finally {
-        if (server.listening) {
+    }finally {
+        if (server?.listening) {
             await new Promise((resolve, reject) => {
-                server.close((error) => error ? reject(error) : resolve());
+                server.close(error => error ? reject(error) : resolve());
             });
         }
 
-        await mongoose.disconnect();
+        if (testUserId && mongoose.connection.readyState === 1) {
+            await User.deleteOne({ _id: testUserId });
+        }
+
+        await mongoose.disconnect().catch(() => {});
     }
 });

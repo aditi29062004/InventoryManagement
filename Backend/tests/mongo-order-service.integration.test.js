@@ -318,7 +318,11 @@ test('Mongo order service creates orders safely and prevents duplicate stock ded
         const ownerMovements = await StockMovement.countDocuments({
             ownerId: owner._id
         });
-        assert.equal(ownerMovements, 4);
+
+        const expectedOwnerMovements =
+            transition.status === 'cancelled' ? 5 : 4;
+
+        assert.equal(ownerMovements, expectedOwnerMovements);
 
         console.log('Order integration checks passed:', JSON.stringify({
             createdOrder: true,
