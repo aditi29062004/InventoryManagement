@@ -40,19 +40,20 @@ app.use(morgan('combined'));
 
 // CORS configuration
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' ? 
-        ['https://your-domain.com'] : 
-        [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:5500',
-    'http://localhost:5173',
-    'http://127.0.0.1:5173'
-],
+    origin: process.env.NODE_ENV === 'production'
+        ? (process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
+        : [
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'http://localhost:5500',
+            'http://localhost:5173',
+            'http://127.0.0.1:5173'
+        ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Idempotency-Key']
 }));
+
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
